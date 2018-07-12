@@ -1,0 +1,12 @@
+.svn
+.project
+.idea
+*.iml
+*.class
+*.jar
+*.war
+*.xsd
+*.log
+.settings/
+**/wsdl/
+**/target/
