@@ -4,7 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class Basket {
+public class BasketHandler {
 
     private static final int[] PRICES = {10, 10, 2, 1, 1};
     private static final int[] VALUES = {6, 5, 4, 3, 3};
@@ -14,17 +14,17 @@ public class Basket {
 
     public static void main(String[] args) {
 
-        int basket = getBasket(PRICES, VALUES, MONEY);
+        int bestAffordableValue = getBestAffordableValue(PRICES, VALUES, MONEY);
 
-        if (basket == EXPECTED_VALUE) {
-            System.out.println("The best affordable value you can get is " + basket);
+        if (bestAffordableValue == EXPECTED_VALUE) {
+            System.out.println("The best affordable value you can get is " + bestAffordableValue);
         } else {
-            System.out.println("Value expected was " + EXPECTED_VALUE + ". Got " + basket + " instead.");
+            System.out.println("Value expected was " + EXPECTED_VALUE + ". Got " + bestAffordableValue + " instead.");
         }
 
     }
 
-    private static int getBasket(final int[] prices, final int[] values, final int money) {
+    private static int getBestAffordableValue(final int[] prices, final int[] values, final int money) {
         return getBestAffordableValue(
                 getAllItemCombination(buildItemList(prices, values)),
                 money
@@ -32,6 +32,9 @@ public class Basket {
     }
 
     private static List<Item> buildItemList(int[] prices, int[] values) {
+        if (prices.length != values.length) {
+            throw new RuntimeException("List of prices and values don't have the same size");
+        }
         List<Item> items = new ArrayList<>();
         IntStream.range(0, prices.length).forEach(i -> items.add(new Item(prices[i], values[i])));
         return items;
@@ -45,14 +48,16 @@ public class Basket {
         int lastIndex = items.size() - 1;
         Item lastItem = items.get(lastIndex);
 
-        List<Item> combinations = getAllItemCombination(items.subList(0, lastIndex));
+        List<Item> previousCombinations = getAllItemCombination(items.subList(0, lastIndex));
 
-        List<Item> result = new ArrayList<>(combinations);
+        List<Item> result = new ArrayList<>(previousCombinations);
+        previousCombinations.forEach(combination -> result.add(
+                new Item(
+                        combination.price + lastItem.price,
+                        combination.value + lastItem.value
+                )
+        ));
 
-        Item sum = new Item(lastItem.price, lastItem.value);
-        for (Item combination : combinations) {
-            result.add(new Item(combination.price + sum.price, combination.value + sum.value));
-        }
         if (DEBUG) {
             result.forEach(System.out::println);
             System.out.println();
@@ -65,7 +70,7 @@ public class Basket {
         return summedUpItems.stream()
                 .filter(item -> item.price <= money)
                 .max(Comparator.comparingInt(item -> item.value))
-                .get()
+                .orElse(new Item())
                 .value;
     }
 
